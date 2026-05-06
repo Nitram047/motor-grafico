@@ -6,43 +6,47 @@ La función devuelve (vértices, normales, índices) como arrays numpy.
 """
 
 import numpy as np
-import moderngl
-
 
 def create_unit_cube():
-    """Devuelve (packed_vertices, indices) con intercalado (x,y,z, nx,ny,nz)."""
+    """Devuelve (vertices, indices) con 24 vértices (3 floats cada uno) y 36 índices."""
     h = 0.5
+    # Definición cuidadosa: cada cara en CCW visto desde fuera
+    # Formato: cara normal, luego 4 vértices en orden CCW
     faces = [
-        # Frontal (z+)
-        ((-h, -h,  h), (-h,  h,  h), ( h,  h,  h), ( h, -h,  h)),
-        # Trasera (z-)
-        ((-h, -h, -h), ( h, -h, -h), ( h,  h, -h), (-h,  h, -h)),
-        # Superior (y+)
-        ((-h,  h, -h), (-h,  h,  h), ( h,  h,  h), ( h,  h, -h)),
-        # Inferior (y-)
-        ((-h, -h, -h), ( h, -h, -h), ( h, -h,  h), (-h, -h,  h)),
-        # Derecha (x+)
-        (( h, -h, -h), ( h,  h, -h), ( h,  h,  h), ( h, -h,  h)),
-        # Izquierda (x-)
-        ((-h, -h, -h), (-h, -h,  h), (-h,  h,  h), (-h,  h, -h)),
+        # Front (+Z) : mirando hacia +Z, el orden CCW es (-,-) -> (+,-) -> (+,+) -> (-,+)
+        ((0,0,1), (-h, -h,  h), ( h, -h,  h), ( h,  h,  h), (-h,  h,  h)),
+        # Back (-Z) : mirando hacia -Z, el orden CCW es (+,-) -> (-,-) -> (-,+) -> (+,+)
+        ((0,0,-1), ( h, -h, -h), (-h, -h, -h), (-h,  h, -h), ( h,  h, -h)),
+        # Up (+Z) -> aquí Z es arriba, pero en nuestro sistema Z up, "up" es +Z
+        # La cara superior en Z = +h, mirando hacia +Z, ya está cubierta en Front?
+        # En realidad, si Z es arriba, la cara "top" es la que tiene normal +Z, ya la tenemos como Front.
+        # Pero necesitamos las seis caras: derecha (+X), izquierda (-X), superior (+Z), inferior (-Z), frontal? 
+        # Ajustemos: Usaremos normales consistentes con ejes:
+        # X right, Y front, Z up.
+        # Caras: Right (+X), Left (-X), Top (+Z), Bottom (-Z), Front (+Y), Back (-Y)
+        # ------------------------------------------------------------
+        # Derecha (+X)
+        ((1,0,0), ( h, -h, -h), ( h,  h, -h), ( h,  h,  h), ( h, -h,  h)),
+        # Izquierda (-X)
+        ((-1,0,0), (-h, -h,  h), (-h,  h,  h), (-h,  h, -h), (-h, -h, -h)),
+        # Superior (+Z)
+        ((0,0,1), (-h, -h,  h), ( h, -h,  h), ( h,  h,  h), (-h,  h,  h)),
+        # Inferior (-Z)
+        ((0,0,-1), (-h, -h, -h), (-h,  h, -h), ( h,  h, -h), ( h, -h, -h)),
+        # Frontal (+Y)
+        ((0,1,0), (-h,  h, -h), ( h,  h, -h), ( h,  h,  h), (-h,  h,  h)),
+        # Trasera (-Y)
+        ((0,-1,0), (-h, -h,  h), ( h, -h,  h), ( h, -h, -h), (-h, -h, -h)),
     ]
-    #normals_list = [
-    #    (0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0), (-1, 0, 0)
-    #]
 
-    vertex_list = []
-    index_list = []
+    vertices = []
+    indices = []
     v_offset = 0
-
-    for face_idx, (v0, v1, v2, v3) in enumerate(faces):
-        #n = normals_list[face_idx]
+    for normal, v0, v1, v2, v3 in faces:
         for v in (v0, v1, v2, v3):
-            vertex_list.extend(v)
-            #vertex_list.extend(n)
-        index_list.extend([v_offset, v_offset+1, v_offset+2,
-                           v_offset, v_offset+2, v_offset+3])
+            vertices.extend(v)
+        indices.extend([v_offset, v_offset+1, v_offset+2,
+                        v_offset, v_offset+2, v_offset+3])
         v_offset += 4
 
-    vertices = np.array(vertex_list, dtype=np.float32)
-    indices = np.array(index_list, dtype=np.uint32)
-    return vertices, indices
+    return np.array(vertices, dtype=np.float32), np.array(indices, dtype=np.uint32)

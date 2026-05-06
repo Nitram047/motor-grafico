@@ -79,8 +79,8 @@ class VoxelWorldNode(Node):
             [
                 (engine.cube_vbo, '3f', 'aPos'),
                 #(engine.cube_vbo, '3f 3f', 'aPos', 'aNormal'),
-                (self.instance_pos_vbo, '3f /v', 'instancePos'),
-                (self.instance_color_vbo, '3f /v', 'instanceColor'),
+                (self.instance_pos_vbo, '3f /i', 'instancePos'),
+                (self.instance_color_vbo, '3f /i', 'instanceColor'),
             ],
             index_buffer=engine.cube_ibo,
         )

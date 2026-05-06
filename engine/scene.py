@@ -70,25 +70,35 @@ class VoxelWorldNode(Node):
 
     def setup_vao(self, engine):
         if self._positions is None:
+            print("setup_vao: _positions is None, aborting")
             return
+        print(f"Creando buffers para {len(self._positions)} instancias")
         self.instance_pos_vbo = engine.ctx.buffer(self._positions)
         self.instance_color_vbo = engine.ctx.buffer(self._colors)
+        # Verificar errores tras creación de buffers
+        err = engine.ctx.error
+        if err != 'GL_NO_ERROR':
+            print(f"Error tras crear buffers: {err}")
 
         self.vao = engine.ctx.vertex_array(
             engine.program,
             [
                 (engine.cube_vbo, '3f', 'aPos'),
-                #(engine.cube_vbo, '3f 3f', 'aPos', 'aNormal'),
-                (self.instance_pos_vbo, '3f /v', 'instancePos'),
-                (self.instance_color_vbo, '3f /v', 'instanceColor'),
+                (self.instance_pos_vbo, '3f /i', 'instancePos'),
+                (self.instance_color_vbo, '3f /i', 'instanceColor'),
             ],
             index_buffer=engine.cube_ibo,
         )
+        err = engine.ctx.error
+        print(f"Error tras crear VAO: {err}")
+        print(f"VAO creado: {self.vao}")
 
     def render(self, view_matrix, projection_matrix, program):
         if self.instance_count == 0 or self.vao is None:
+            print(f"Render: instance_count={self.instance_count}, vao={self.vao}")
             return
         model = self.get_world_matrix()
         program['view'].write(view_matrix)
         program['projection'].write(projection_matrix)
+        print(f"Dibujando {self.instance_count} instancias")   # depuración
         self.vao.render(instances=self.instance_count)
